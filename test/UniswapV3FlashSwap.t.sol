@@ -13,6 +13,7 @@ contract UniswapV3FlashSwapTest is Test {
         0x7baecE5d47f1BC5E1953FBE0E9931D54DAB6D810;
     address private constant univ2pool =
         0x455d4d19aCA31C7530D75a32f98cf28d98365587;
+    address user1 = makeAddr("User1");
 
     IWETH private weth = IWETH(WETH);
     IERC20 private turbo = IERC20(TURBO);
@@ -20,7 +21,8 @@ contract UniswapV3FlashSwapTest is Test {
     UniswapV3FlashSwap private uniFlashSwapContract = new UniswapV3FlashSwap();
 
     function setUp() public {
-        vm.createSelectFork(vm.envString("RPC_URL"), 17465000);
+        vm.createSelectFork(vm.envString("FORK_URL"), 18891170);
+        deal(user1, 1e18);
     }
 
     function testFlashSwap() public {
@@ -37,8 +39,10 @@ contract UniswapV3FlashSwapTest is Test {
         weth.approve(address(uniFlashSwapContract), wethMaxFee);
 
         uint balBefore = weth.balanceOf(address(this));
+        console.log("WETH balance before", balBefore);
         uniFlashSwapContract.flashSwap(univ3pool, fee1, WETH, TURBO, amountIn);
         uint balAfter = weth.balanceOf(address(this));
+        console.log("WETH balance after", balAfter);
 
         if (balAfter >= balBefore) {
             console.log("WETH profit", balAfter - balBefore);

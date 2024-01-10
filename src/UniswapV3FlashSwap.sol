@@ -16,6 +16,8 @@ contract UniswapV3FlashSwap {
     // Example WETH/USDC
     // Sell WETH high      -> Buy WETH low        -> WETH profit
     // WETH in -> USDC out -> USDC in -> WETH out -> WETH profit
+    event Log(string message);
+
     function flashSwap(
         address pool0,
         uint24 fee1,
@@ -23,6 +25,7 @@ contract UniswapV3FlashSwap {
         address tokenOut,
         uint amountIn
     ) external {
+        emit Log("flashSwap start");
         bool zeroForOne = tokenIn < tokenOut;
         uint160 sqrtPriceLimitX96 = zeroForOne
             ? MIN_SQRT_RATIO + 1
@@ -177,4 +180,6 @@ interface IWETH is IERC20 {
     function deposit() external payable;
 
     function withdraw(uint amount) external;
+
+    function balanceOf(address account) external view returns (uint);
 }
