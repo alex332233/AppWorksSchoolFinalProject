@@ -1,0 +1,3 @@
+{
+  "solidity.remappings": ["@uniswap/=node_modules/@uniswap/"]
+}
