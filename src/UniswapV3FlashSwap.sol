@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "forge-std/console.sol";
 
 contract UniswapV3FlashSwap {
     ISwapRouter constant router =
@@ -14,9 +15,9 @@ contract UniswapV3FlashSwap {
         1461446703485210103287273052203988822378723970342;
 
     // Example WETH/USDC
-    // Sell WETH high      -> Buy WETH low        -> WETH profit
-    // WETH in -> USDC out -> USDC in -> WETH out -> WETH profit
-    event Log(string message);
+    // Sell WETH high       -> Buy WETH low         -> WETH profit
+    // WETH in -> Turbo out -> Turbo in -> WETH out -> WETH profit
+    // event Log(string message);
 
     function flashSwap(
         address pool0,
@@ -25,11 +26,13 @@ contract UniswapV3FlashSwap {
         address tokenOut,
         uint amountIn
     ) external {
-        emit Log("flashSwap start");
+        // emit Log("flashSwap start");
+        console.log("flashSwap start");
         bool zeroForOne = tokenIn < tokenOut;
         uint160 sqrtPriceLimitX96 = zeroForOne
             ? MIN_SQRT_RATIO + 1
             : MAX_SQRT_RATIO - 1;
+        console.log("abi.encode start");
         bytes memory data = abi.encode(
             msg.sender,
             pool0,
@@ -40,6 +43,7 @@ contract UniswapV3FlashSwap {
             zeroForOne
         );
 
+        console.log("swap start");
         IUniswapV3Pool(pool0).swap(
             address(this),
             zeroForOne,
@@ -47,6 +51,7 @@ contract UniswapV3FlashSwap {
             sqrtPriceLimitX96,
             data
         );
+        console.log("swap end");
     }
 
     // implement arbitrage logic here
@@ -55,6 +60,7 @@ contract UniswapV3FlashSwap {
         int amount1,
         bytes calldata data
     ) external {
+        console.log("uniswapV3SwapCallback start");
         (
             address caller,
             address pool0,
@@ -67,16 +73,18 @@ contract UniswapV3FlashSwap {
                 data,
                 (address, address, uint24, address, address, uint, bool)
             );
-
+        console.log("data decoded");
         require(msg.sender == address(pool0), "not authorized");
-
         uint amountOut;
+        console.log("amount0", uint(amount0));
+        console.log("amount1", uint(amount1));
         if (zeroForOne) {
             amountOut = uint(-amount1);
         } else {
             amountOut = uint(-amount0);
         }
-
+        console.log("amountOut", amountOut);
+        console.log("swap start");
         uint buyBackAmount = _swap(tokenOut, tokenIn, fee1, amountOut);
 
         // Repay the flash loan
