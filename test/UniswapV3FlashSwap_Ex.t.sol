@@ -4,17 +4,21 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import "../src/UniswapV3FlashSwap.sol";
+import "../src/UniswapV3FlashSwap_Ex.sol";
 
-contract UniswapV3FlashSwapTest is Test {
+contract UniswapV3FlashSwapExTest is Test {
     address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
     IWETH private weth = IWETH(WETH);
 
-    UniswapV3FlashSwap private uni = new UniswapV3FlashSwap();
+    UniswapV3FlashSwap private uni;
 
-    function setUp() public {}
+    function setUp() public {
+        vm.createSelectFork(vm.envString("FORK_URL"), 18995573);
+        // "WETH loss", 25831902577870305 @18995573
+        uni = new UniswapV3FlashSwap();
+    }
 
     function testFlashSwap() public {
         // USDC / WETH pool
@@ -37,5 +41,6 @@ contract UniswapV3FlashSwapTest is Test {
         } else {
             console.log("WETH loss", balBefore - balAfter);
         }
+        console.log("Block number: ", block.number);
     }
 }

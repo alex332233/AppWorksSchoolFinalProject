@@ -69,6 +69,7 @@ contract UniswapV3FlashSwap {
             amountOut = uint(-amount0);
         }
 
+        // buy WETH low -> buyBackAmount = more or less WETH
         uint buyBackAmount = _swap(tokenOut, tokenIn, fee1, amountOut);
 
         if (buyBackAmount >= amountIn) {
