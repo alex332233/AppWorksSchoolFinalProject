@@ -1,66 +1,18 @@
-## Foundry
+![image](https://github.com/alex332233/AppWorksSchoolFinalProject/assets/99250288/340c6697-9830-425c-9f27-8a5130d7b7a7)# DEX Arbitrage
+Threre are 3+1 contracts in this project:
+AlexUniV2toSushiV2Arbitrage: From UniswapV2 Flashswap borrow token and swap at SushiSwap.
+AlexUniV2toUniV3Arbitrage: From UniswapV2 Flashswap borrow token and swap at UniswapV3.
+AlexV3toV2Arbitrage: From UniswapV3 Flashswap borrow token and swap at UniswapV2.
+AlexV3toV2Arbitrage_try: Try to reproduce this transaction[https://etherscan.io/tx/0x4ad48cba36f758b8a0f19dc26e985e82bff85a14e98fa469789ce9430a0c2276]. This one didn't success since there is another transaction[https://etherscan.io/tx/0xcd237c514a57da0de22c02827d65660463426fb1a22aac97959f22b4cead2d31] ahead in the same block to fulfill situation.
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
-
-Foundry consists of:
-
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+Each contract has it's own test. They can be executed by using
+```
+forge test -vv --fork-url $FORK_URL
 ```
 
-### Test
-
-```shell
-$ forge test
+Coverage can be check by using
 ```
-
-### Format
-
-```shell
-$ forge fmt
+forge coverage
 ```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+result:
+![image](https://github.com/alex332233/AppWorksSchoolFinalProject/assets/99250288/731b5316-450e-4dba-a766-bb28d9c13a21)
