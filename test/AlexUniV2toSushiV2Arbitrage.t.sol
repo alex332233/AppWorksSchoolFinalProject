@@ -20,6 +20,8 @@ contract AlexUniV2toSushiV2ArbitrageTest is Test {
 
     AlexUniV2toSushiV2Arbitrage private uniV2FlashToSushiV2;
 
+    address private maker = makeAddr("Maker");
+
     function setUp() public {
         // //setUp
         // vm.createSelectFork(vm.envString("FORK_URL") /*, 18995573*/);

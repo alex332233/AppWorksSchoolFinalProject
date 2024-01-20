@@ -2,5 +2,7 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+auto_detect_solc = true
+contracts_dir = "/home/alex332233/AppWorkSchool/FinalProject/ArbitrageArbitrage/node_modules/@uniswap/v2-core/build"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
