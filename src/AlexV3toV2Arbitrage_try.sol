@@ -128,19 +128,22 @@ contract AlexUniswapV3toV2ArbitrageTry {
         address[] memory path;
         if (zeroForOne) {
             amountBorrowed = uint(-amount1); //amount1 is borrowed from UniswapV3, so V3 give it a negative value
-            IERC20(uniV3token0).approve(UNISWAP_V2_ROUTER, amountBorrowed);
-            IERC20(uniV3token0).approve(uniV2PairAddress, amountBorrowed);
-            path = getPathForTokens(uniV3token0, uniV3token1); // borrow token1, so swap token1 to token0 at UniswapV2
+            // IERC20(uniV3token0).approve(UNISWAP_V2_ROUTER, amountBorrowed);
+            // IERC20(uniV3token0).approve(uniV2PairAddress, amountBorrowed);
+            // path = getPathForTokens(uniV3token0, uniV3token1); // borrow token1, so swap token1 to token0 at UniswapV2
             // console.log("path from: ", path[0]);
             // console.log("path to: ", path[1]);
         } else {
             amountBorrowed = uint(-amount0); // or balanceOf(uniV3token1)
-            IERC20(uniV3token1).approve(UNISWAP_V2_ROUTER, amountBorrowed);
-            IERC20(uniV3token1).approve(uniV2PairAddress, amountBorrowed);
-            path = getPathForTokens(uniV3token1, uniV3token0);
+            // IERC20(uniV3token1).approve(UNISWAP_V2_ROUTER, amountBorrowed);
+            // IERC20(uniV3token1).approve(uniV2PairAddress, amountBorrowed);
+            // path = getPathForTokens(uniV3token1, uniV3token0);
             // console.log("path from: ", path[0]);
             // console.log("path to: ", path[1]);
         }
+        IERC20(uniV3token1).approve(UNISWAP_V2_ROUTER, amountBorrowed);
+        IERC20(uniV3token1).approve(uniV2PairAddress, amountBorrowed);
+        path = getPathForTokens(uniV3token1, uniV3token0);
         console.log("amountBorrowed: ", amountBorrowed);
         console.log(
             "balanceOf",
@@ -208,7 +211,7 @@ contract AlexUniswapV3toV2ArbitrageTry {
     function getPathForTokens(
         address tokenA,
         address tokenB
-    ) private view returns (address[] memory) {
+    ) private pure returns (address[] memory) {
         // path is from input token to output token
         address[] memory path = new address[](2);
         path[0] = tokenA;

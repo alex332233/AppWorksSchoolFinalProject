@@ -49,6 +49,8 @@ contract AlexUniswapV3toV2Arbitrage {
             zeroForOne
             // ... add more arguments here if needed
         );
+        console.log("token0 in callback data: ", token0);
+        console.log("token1 in callback data: ", token1);
 
         IUniswapV3Pool pool = IUniswapV3Pool(uniV3Pool);
         pool.swap(
@@ -127,17 +129,21 @@ contract AlexUniswapV3toV2Arbitrage {
         uint amountBorrowed;
         address[] memory path;
         if (zeroForOne) {
+            console.log("zeroForOne is True, get in if");
             amountBorrowed = uint(-amount1); //amount1 is borrowed from UniswapV3, so V3 give it a negative value
-            IERC20(uniV3token0).approve(UNISWAP_V2_ROUTER, amountBorrowed);
-            IERC20(uniV3token0).approve(uniV2PairAddress, amountBorrowed);
-            path = getPathForTokens(uniV3token0, uniV3token1); // borrow token1, so swap token1 to token0 at UniswapV2
+            console.log("amountBorrowed: ", amountBorrowed);
+            // IERC20(uniV3token0).approve(UNISWAP_V2_ROUTER, amountBorrowed);
+            // IERC20(uniV3token0).approve(uniV2PairAddress, amountBorrowed);
+            // path = getPathForTokens(uniV3token0, uniV3token1); // borrow token1, so swap token1 to token0 at UniswapV2
             // console.log("path from: ", path[0]);
             // console.log("path to: ", path[1]);
         } else {
+            console.log("zeroForOne is False, get in else");
             amountBorrowed = uint(-amount0); // or balanceOf(uniV3token1)
-            IERC20(uniV3token1).approve(UNISWAP_V2_ROUTER, amountBorrowed);
-            IERC20(uniV3token1).approve(uniV2PairAddress, amountBorrowed);
-            path = getPathForTokens(uniV3token1, uniV3token0);
+            console.log("amountBorrowed: ", amountBorrowed);
+            // IERC20(uniV3token1).approve(UNISWAP_V2_ROUTER, amountBorrowed);
+            // IERC20(uniV3token1).approve(uniV2PairAddress, amountBorrowed);
+            // path = getPathForTokens(uniV3token1, uniV3token0);
             // console.log("path from: ", path[0]);
             // console.log("path to: ", path[1]);
         }
@@ -155,11 +161,15 @@ contract AlexUniswapV3toV2Arbitrage {
             IERC20(uniV3token1).balanceOf(address(this))
         );
         console.log("router: ", UNISWAP_V2_ROUTER);
+        IERC20(uniV3token1).approve(UNISWAP_V2_ROUTER, type(uint).max);
+        IERC20(uniV3token1).approve(uniV2PairAddress, type(uint).max);
+        path = getPathForTokens(uniV3token1, uniV3token0);
         console.log("v2 swap path from: ", path[0]);
         console.log("v2 swap path to: ", path[1]);
         console.log("address(this): ", address(this));
         // Second, swap amountBorrowed token at UniswapV2
         // Specify the exact input amount (amountBorrowed) and minimum output amount
+
         uint[] memory uniV2AmountsOut = IUniswapV2Router02(UNISWAP_V2_ROUTER)
             .swapExactTokensForTokens(
                 amountBorrowed,
@@ -180,6 +190,7 @@ contract AlexUniswapV3toV2Arbitrage {
 
         // Thitd, repay / transfer token back to UniswapV3 Pool
         if (amountFromUniV2Pair >= amountIntoUniV3Pool) {
+            console.log("this transaction is profitable");
             uint profit = amountFromUniV2Pair - amountIntoUniV3Pool;
             IERC20(uniV3token0).transfer(
                 address(uniV3Pool),
@@ -188,18 +199,21 @@ contract AlexUniswapV3toV2Arbitrage {
             IERC20(uniV3token0).transfer(caller, profit);
         } else {
             uint loss = amountIntoUniV3Pool - amountFromUniV2Pair;
+            console.log("this transaction loss", loss);
             IERC20(uniV3token0).transferFrom(caller, address(this), loss);
+            console.log("transfered loss from caller");
             IERC20(uniV3token0).transfer(
                 address(uniV3Pool),
                 amountIntoUniV3Pool
             );
+            console.log("repayed to UniV3Pool");
         }
     }
 
     function getPathForTokens(
         address tokenA,
         address tokenB
-    ) private view returns (address[] memory) {
+    ) private pure returns (address[] memory) {
         // path is from input token to output token
         address[] memory path = new address[](2);
         path[0] = tokenA;
