@@ -1,4 +1,4 @@
-![image](https://github.com/alex332233/AppWorksSchoolFinalProject/assets/99250288/340c6697-9830-425c-9f27-8a5130d7b7a7)# DEX Arbitrage
+# DEX Arbitrage
 Threre are 3+1 contracts in this project:
 AlexUniV2toSushiV2Arbitrage: From UniswapV2 Flashswap borrow token and swap at SushiSwap.
 AlexUniV2toUniV3Arbitrage: From UniswapV2 Flashswap borrow token and swap at UniswapV3.
