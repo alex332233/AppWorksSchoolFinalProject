@@ -15,4 +15,7 @@ Coverage can be check by using
 forge coverage
 ```
 result:
+
 ![image](https://github.com/alex332233/AppWorksSchoolFinalProject/assets/99250288/731b5316-450e-4dba-a766-bb28d9c13a21)
+
+(The lines and branches that aren't covered is those profit situations, since it's not easy to get an arbitrage chance.)
