@@ -10,14 +10,16 @@ import {IUniswapV2Router01} from "@uniswap/v2-periphery/contracts/interfaces/IUn
 import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 // erc20 utils
-import {TestWETH9} from "./helper/TestWETH9.sol";
+// import {TestWETH9} from "./helper/TestWETH9.sol";
 import {TestERC20} from "./helper/TestERC20.sol";
 
 contract AlexUniV2toSushiV2ArbitrageTestCopy is Test {
     // create pair variable and constant setting
-    TestWETH9 public testWeth;
+    // TestWETH9 public testWeth;
     TestERC20 public testUsdc;
-    address public testWethAddr;
+    // address public testWethAddr;
+    address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    IWETH private iweth = IWETH(WETH);
     address public testUsdcAddr;
     IUniswapV2Factory public uniswapV2Factory;
     IUniswapV2Factory public sushiSwapV2Factory;
@@ -55,26 +57,26 @@ contract AlexUniV2toSushiV2ArbitrageTestCopy is Test {
         //add pool setup//
         //////////////////
         console.log("pool setup start...");
-        testWeth = new TestWETH9();
+        // testWeth = new TestWETH9();
         testUsdc = new TestERC20("USD Coin", "USDC", 6);
         // Approve WETH fee
         uint wethMaxFee = 200 * 1e18;
-        testWeth.deposit{value: wethMaxFee}();
-        testWeth.approve(address(uniV2FlashToSushiV2), wethMaxFee);
+        iweth.deposit{value: wethMaxFee}();
+        iweth.approve(address(uniV2FlashToSushiV2), wethMaxFee);
 
-        testWethAddr = address(testWeth);
+        // testWethAddr = address(testWeth);
         testUsdcAddr = address(testUsdc);
         address wethUsdcUnipoolAddr = IUniswapV2Factory(UNISWAP_V2_FACTORY)
-            .createPair(testWethAddr, testUsdcAddr);
+            .createPair(WETH, testUsdcAddr);
         address wethUsdcSushipoolAddr = IUniswapV2Factory(SUSHISWAP_V2_FACTORY)
-            .createPair(testWethAddr, testUsdcAddr);
+            .createPair(WETH, testUsdcAddr);
         vm.label(UNISWAP_V2_FACTORY, "UniswapV2Factory");
         vm.label(SUSHISWAP_V2_FACTORY, "SushiSwapV2Factory");
         vm.label(UNISWAP_V2_ROUTER, "UniswapV2Router");
         vm.label(SUSHISWAP_V2_ROUTER, "SushiSwapV2Router");
         vm.label(wethUsdcUnipoolAddr, "WethUsdcUniPool");
         vm.label(wethUsdcSushipoolAddr, "WethUsdcSushiPool");
-        vm.label(address(testWethAddr), "testWETH9");
+        vm.label(WETH, "WETH");
         vm.label(address(testUsdcAddr), "testUSDC");
 
         console.log("pool setup complete!");
@@ -121,23 +123,23 @@ contract AlexUniV2toSushiV2ArbitrageTestCopy is Test {
         //////////////
         //test start//
         //////////////
-        uint256 repayETH = 5 ether;
-        uint balBefore = testWeth.balanceOf(address(this));
-        console.log("caller WETH balance before", balBefore);
+        uint256 repayUSDC = 800 * 1e6;
+        uint balBefore = testUsdc.balanceOf(address(this));
+        console.log("caller USDC balance before", balBefore);
         uniV2FlashToSushiV2.UniswapV2FlashSwap(
-            address(testWethAddr),
+            WETH,
             address(testUsdcAddr),
             address(UNISWAP_V2_ROUTER),
             address(SUSHISWAP_V2_ROUTER),
-            repayETH
+            repayUSDC
         );
-        uint balAfter = testWeth.balanceOf(address(this));
-        console.log("caller WETH balance after", balAfter);
+        uint balAfter = testUsdc.balanceOf(address(this));
+        console.log("caller USDC balance after", balAfter);
 
         if (balAfter >= balBefore) {
-            console.log("WETH profit", balAfter - balBefore);
+            console.log("USDC profit", balAfter - balBefore);
         } else {
-            console.log("WETH loss", balBefore - balAfter);
+            console.log("USDC loss", balBefore - balAfter);
         }
         // assertEq(usdc.balanceOf(address(arbitrage)), 98184746);
     }
