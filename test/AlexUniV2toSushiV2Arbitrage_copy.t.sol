@@ -101,8 +101,8 @@ contract AlexUniV2toSushiV2ArbitrageTestCopy is Test {
         (uint256 token0Reserve, uint256 token1Reserve, ) = IUniswapV2Pair(
             wethUsdcUnipoolAddr
         ).getReserves();
-        console.log("wethUsdcUnipool weth reserve", token0Reserve);
-        console.log("wethUsdcUnipool usdc reserve", token1Reserve);
+        console.log("wethUsdcUnipool usdc reserve", token0Reserve);
+        console.log("wethUsdcUnipool weth reserve", token1Reserve);
         console.log(
             "LP balance of this address",
             IUniswapV2Pair(wethUsdcUnipoolAddr).balanceOf(address(this))

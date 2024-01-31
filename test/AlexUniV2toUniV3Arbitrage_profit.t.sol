@@ -12,6 +12,7 @@ import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pa
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TestERC20} from "./helper/TestERC20.sol";
 
 contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
@@ -23,8 +24,6 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
     IUniswapV2Factory public uniswapV2Factory;
     IUniswapV2Router01 public uniswapV2Router;
     IUniswapV2Pair public wethUsdcPool;
-    int24 constant MIN_TICK = -887272;
-    int24 constant MAX_TICK = 887272;
 
     uint public tokenId;
     uint public liquidity;
@@ -48,6 +47,11 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
     address uniV3Pool;
     uint24 uniV3fee = 500;
     uint160 sqrtPriceX96 = 1771580069046490802230235074;
+    // 9507379500000000000000000000000; 120 * 2 ** 96
+    uint256 amount0ToMint = 6000 * 1e6;
+    uint256 amount1ToMint = 50 * 1e18;
+    int24 constant MIN_TICK = -100000;
+    int24 constant MAX_TICK = 100000;
 
     // WETH/USDC V3 0.05 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640
 
@@ -56,7 +60,7 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
         //setUp//
         /////////
         vm.createSelectFork(vm.envString("FORK_URL") /*, 18995573*/);
-        console.log("deploy uniV2FlashToSushiV2");
+        console.log("deploy uniV2FlashToUniV3");
         uniV2FlashToUniV3 = new AlexUniV2toUniV3ArbitrageProfit();
         console.log("uniV2FlashToUniV3 deployed!");
 
@@ -65,7 +69,7 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
         //////////////////
         console.log("pool setup start...");
         // testWeth = new TestWETH9();
-        testUsdc = new TestERC20("AlextestUSD Coin", "AlextestUSDC", 5);
+        testUsdc = new TestERC20("AlextestUSD Coin", "AlextestUSDC", 6);
 
         // create UniV2pair testUSDC 4000 WETH 50
         // get weth and approve
@@ -99,12 +103,16 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
         (uint256 token0Reserve, uint256 token1Reserve, ) = IUniswapV2Pair(
             wethUsdcUnipoolAddr
         ).getReserves();
-        console.log("wethUsdcUnipool weth reserve", token0Reserve);
-        console.log("wethUsdcUnipool usdc reserve", token1Reserve);
+        console.log("wethUsdcUnipool usdc reserve", token0Reserve);
+        console.log("wethUsdcUnipool weth reserve", token1Reserve);
+        console.log(
+            "testUSDC balance after creating uniV2pool",
+            testUsdc.balanceOf(address(this))
+        );
 
         // create UniV3pool testUSDC 6000 WETH 50 fee 500
         iweth.approve(address(nonfungiblePositionManager), 100 * 1e18);
-        testUsdc.approve(address(nonfungiblePositionManager), 20000 * 1e6);
+        testUsdc.approve(address(nonfungiblePositionManager), 10000 * 1e6);
         uniV3Pool = nonfungiblePositionManager
             .createAndInitializePoolIfNecessary(
                 testUsdcAddr,
@@ -113,6 +121,7 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
                 sqrtPriceX96
             );
         console.log("UniV3 pool setup complete!");
+        console.log("UniV3 pool address", uniV3Pool);
 
         INonfungiblePositionManager.MintParams
             memory params = INonfungiblePositionManager.MintParams({
@@ -121,16 +130,21 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
                 fee: 500,
                 tickLower: MIN_TICK,
                 tickUpper: MAX_TICK,
-                amount0Desired: 6000 * 1e6,
-                amount1Desired: 50 * 1e18,
+                amount0Desired: amount0ToMint,
+                amount1Desired: amount1ToMint,
                 amount0Min: 0,
                 amount1Min: 0,
                 recipient: address(this),
                 deadline: block.timestamp
             });
+        console.log("UniV3 pool mint start...");
         (tokenId, liquidity, amount0, amount1) = nonfungiblePositionManager
             .mint(params);
         console.log("UniV3 pool mint complete!");
+        console.log(
+            "testUSDC balance after creating uniV3pool",
+            testUsdc.balanceOf(address(this))
+        );
     }
 
     function testUniswapV2FlashSwap() public {
