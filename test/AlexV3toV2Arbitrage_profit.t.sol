@@ -4,18 +4,15 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import "../src/AlexUniV2toUniV3Arbitrage_profit.sol";
-// uniswap utils
+import "../src/AlexV3toV2Arbitrage_profit.sol";
 import {IUniswapV2Router01} from "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-// import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-// import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TestERC20} from "./helper/TestERC20.sol";
 
-contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
+contract AlexUniswapV3toV2ArbitrageProfitTest is Test {
     // create UniV2pair testUSDC 4000 WETH 50 settings
     TestERC20 public testUsdc;
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -40,41 +37,39 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
     INonfungiblePositionManager public nonfungiblePositionManager =
         INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
 
-    AlexUniV2toUniV3ArbitrageProfit private uniV2FlashToUniV3;
-
     address uniV3Pool;
     uint24 uniV3fee = 500;
-    // uint160 sqrtPriceX96 = 8.6798 * 1e29; // sqrt(120) * 2 ** 96
-    // 1771580069046490802230235074
+    uint160 sqrtPriceX96 = 1771580069046490802230235074;
     // 9507379500000000000000000000000; 120 * 2 ** 96
-
-    uint256 amount0ToMint = 6000 * 1e6;
+    uint256 amount0ToMint = 4000 * 1e6;
     uint256 amount1ToMint = 50 * 1e18;
-    uint160 sqrtPriceX96 = 2.7201717 * 1e31; // sqrt(amount0ToMint/amount1ToMint) * 2 ** 96
+    int24 constant MIN_TICK = -100000;
+    int24 constant MAX_TICK = 100000;
 
-    // int24 constant MIN_TICK = 40960; // price ~ 60
-    // int24 constant MAX_TICK = 51940; // price ~ 180
+    // arbitrage contract
+    AlexUniswapV3toV2ArbitrageProfit private uniV3FlashToV2;
 
     function setUp() public {
         /////////
         //setUp//
         /////////
         vm.createSelectFork(vm.envString("FORK_URL") /*, 18995573*/);
-        console.log("deploy uniV2FlashToUniV3");
-        uniV2FlashToUniV3 = new AlexUniV2toUniV3ArbitrageProfit();
-        console.log("uniV2FlashToUniV3 deployed!");
+        console.log("deploy uniV3FlashToUniV2");
+        uniV3FlashToV2 = new AlexUniswapV3toV2ArbitrageProfit();
+        console.log("uniV3FlashToUniV2 deployed!");
 
         //////////////////
         //add pool setup//
         //////////////////
         console.log("pool setup start...");
+        // testWeth = new TestWETH9();
         testUsdc = new TestERC20("AlextestUSD Coin", "AlextestUSDC", 6);
 
-        // create UniV2pair testUSDC 4000 WETH 50
+        // create UniV2pair testUSDC 6000 WETH 50
         // get weth and approve
         uint wethMaxFee = 200 * 1e18;
         iweth.deposit{value: wethMaxFee}();
-        iweth.approve(address(uniV2FlashToUniV3), wethMaxFee);
+        iweth.approve(address(uniV3FlashToV2), wethMaxFee);
 
         testUsdcAddr = address(testUsdc);
         address wethUsdcUnipoolAddr = IUniswapV2Factory(UNISWAP_V2_FACTORY)
@@ -93,7 +88,7 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
         // add liquidity to UniV2 pool
         IUniswapV2Router01(UNISWAP_V2_ROUTER).addLiquidityETH{value: 50 ether}(
             testUsdcAddr,
-            4_000 * 10 ** testUsdc.decimals(),
+            6_000 * 10 ** testUsdc.decimals(),
             0,
             0,
             address(this),
@@ -109,7 +104,7 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
             testUsdc.balanceOf(address(this))
         );
 
-        // create UniV3pool testUSDC 6000 WETH 50 fee 500
+        // create UniV3pool testUSDC 4000 WETH 50 fee 500
         iweth.approve(address(nonfungiblePositionManager), 100 * 1e18);
         testUsdc.approve(address(nonfungiblePositionManager), 10000 * 1e6);
         uniV3Pool = nonfungiblePositionManager
@@ -121,20 +116,14 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
             );
         console.log("UniV3 pool setup complete!");
         console.log("UniV3 pool address", uniV3Pool);
-        (, int24 currentTick, , , , , ) = IUniswapV3Pool(uniV3Pool).slot0();
-        checkTick(currentTick);
-        int24 tickLower = currentTick - (919);
-        checkTick(tickLower);
-        int24 tickUpper = currentTick + (571);
-        checkTick(tickUpper);
 
         INonfungiblePositionManager.MintParams
             memory params = INonfungiblePositionManager.MintParams({
                 token0: testUsdcAddr,
                 token1: WETH,
                 fee: 500,
-                tickLower: tickLower,
-                tickUpper: tickUpper,
+                tickLower: MIN_TICK,
+                tickUpper: MAX_TICK,
                 amount0Desired: amount0ToMint,
                 amount1Desired: amount1ToMint,
                 amount0Min: 0,
@@ -152,23 +141,18 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
         );
     }
 
-    function testUniswapV2FlashSwap() public {
-        //////////////
-        //test start//
-        //////////////
+    function testUniswapV3FlashSwap() public {
         console.log("------------------------------");
         console.log("-------------USDC-------------");
         console.log("------------------------------");
         uint usdcBalBefore = testUsdc.balanceOf(address(this));
         console.log("caller USDC balance before", usdcBalBefore);
-        uint repayUSDCAmountToUniV2 = 500 * 1e6;
-        uniV2FlashToUniV3.UniswapV2FlashSwap(
-            WETH, // borrow from UniV2
-            testUsdcAddr, // repay to UniV2, profit or loss
-            UNISWAP_V2_ROUTER,
-            repayUSDCAmountToUniV2,
+        uint amountUSDCIntoUniV3Pool = 800 * 1e6;
+        uniV3FlashToV2.UniswapV3FlashSwap(
             uniV3Pool,
-            uniV3fee
+            testUsdcAddr,
+            WETH,
+            amountUSDCIntoUniV3Pool
         );
         uint usdcBalAfter = testUsdc.balanceOf(address(this));
         console.log("caller USDC balance after", usdcBalAfter);
@@ -179,79 +163,4 @@ contract AlexUniV2toUniV3ArbitrageProfitTest is Test {
             console.log("USDC loss", usdcBalBefore - usdcBalAfter);
         }
     }
-
-    event LogCurrentTick(int24 tick);
-
-    function checkTick(int24 tick) public {
-        emit LogCurrentTick(tick);
-    }
-
-    // function testUniV2toUniV3Requires() public {
-    //     /////////
-    //     //setUp//
-    //     /////////
-    //     vm.createSelectFork(vm.envString("FORK_URL") /*, 18995573*/);
-    //     uniV2FlashToUniV3 = new AlexUniV2toUniV3Arbitrage();
-    //     // Approve WETH fee
-    //     uint wethMaxFee = 10e18;
-    //     weth.deposit{value: wethMaxFee}();
-    //     weth.approve(address(uniV2FlashToUniV3), wethMaxFee);
-
-    //     // get some USDC
-    //     path[0] = WETH;
-    //     path[1] = USDC;
-    //     IERC20(WETH).approve(UNISWAP_V2_ROUTER, 1e18);
-    //     IUniswapV2Router02(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
-    //         1e18,
-    //         0,
-    //         path,
-    //         address(this),
-    //         block.timestamp
-    //     )[1];
-    //     usdc.approve(address(uniV2FlashToUniV3), 20000 * 1e6);
-    //     console.log("USDC balance", IERC20(USDC).balanceOf(address(this)));
-
-    //     //////////////
-    //     //test start//
-    //     //////////////
-    //     vm.expectRevert("This pool does not exist");
-    //     uint repayAmountToUniV2 = 2 * 1e18;
-    //     uniV2FlashToUniV3.UniswapV2FlashSwap(
-    //         address(0), // borrow from UniV2
-    //         address(0), // repay to UniV2, profit or loss
-    //         UNISWAP_V2_ROUTER,
-    //         repayAmountToUniV2,
-    //         uniV3Pool,
-    //         uniV3fee
-    //     );
-
-    //     vm.expectRevert("Not from the right pool");
-    //     bytes memory data = abi.encode(
-    //         address(this),
-    //         WETH,
-    //         WETH,
-    //         500
-    //         // _tokenBorrow
-    //     );
-    //     uniV2FlashToUniV3.uniswapV2Call(address(this), 0, 0, data);
-    // }
-
-    // // self-created funciton for creating a pool
-    // function createAndInitializePoolIfNecessary(
-    //     address tokenA,
-    //     address tokenB,
-    //     uint24 fee,
-    //     uint160 sqrtPriceX96
-    // ) external payable returns (address pool) {
-    //     pool = IUniswapV3Factory(factory).getPool(tokenA, tokenB, fee);
-
-    //     if (pool == address(0)) {
-    //         pool = IUniswapV3Factory(factory).createPool(tokenA, tokenB, fee);
-    //         IUniswapV3Pool(pool).initialize(sqrtPriceX96);
-    //     } else {
-    //         (uint160 sqrtPriceX96Existing, , , , , , ) = IUniswapV3Pool(pool).slot0();
-    //         if (sqrtPriceX96Existing == 0) {
-    //             IUniswapV3Pool(pool).initialize(sqrtPriceX96);
-    //         }
-    //     }
 }
