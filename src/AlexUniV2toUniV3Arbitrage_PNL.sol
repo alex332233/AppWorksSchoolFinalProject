@@ -11,9 +11,11 @@ import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 // import "../node_modules/@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 // import "../node_modules/@uniswap/v2-periphery/contracts/interfaces/IWETH.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
-contract AlexUniV2toUniV3Arbitrage {
+contract AlexUniV2toUniV3ArbitragePNL {
     // variable and constant setting
     uint160 internal constant MIN_SQRT_RATIO = 4295128739;
     uint160 internal constant MAX_SQRT_RATIO =
@@ -260,16 +262,6 @@ interface ISwapRouter {
     ) external payable returns (uint amountOut);
 }
 
-interface IUniswapV3Pool {
-    function swap(
-        address recipient,
-        bool zeroForOne,
-        int amountSpecified,
-        uint160 sqrtPriceLimitX96,
-        bytes calldata data
-    ) external returns (int amount0, int amount1);
-}
-
 interface IERC20 {
     function totalSupply() external view returns (uint);
 
@@ -299,29 +291,3 @@ interface IWETH is IERC20 {
 
     function withdraw(uint amount) external;
 }
-
-// interface IUniswapV2Pair {
-//     function swap(
-//         uint amount0Out,
-//         uint amount1Out,
-//         address to,
-//         bytes calldata data
-//     ) external;
-// }
-
-interface IUniswapV2Factory {
-    function getPair(
-        address tokenA,
-        address tokenB
-    ) external view returns (address pair);
-}
-
-// interface IUniswapV2Router02 {
-//     function swapExactTokensForTokens(
-//         uint amountIn,
-//         uint amountOutMin,
-//         address[] calldata path,
-//         address to,
-//         uint deadline
-//     ) external returns (uint[] memory amounts);
-// }

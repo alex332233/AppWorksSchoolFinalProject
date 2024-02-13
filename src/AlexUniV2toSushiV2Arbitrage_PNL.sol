@@ -3,16 +3,11 @@ pragma solidity ^0.8.20;
 
 import "forge-std/console.sol";
 
-// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// import "../node_modules/@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-// // import "../node_modules/@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-
-// import "../node_modules/@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
-// import "../node_modules/@uniswap/v2-periphery/contracts/interfaces/IWETH.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
-contract AlexUniV2toSushiV2Arbitrage {
+contract AlexUniV2toSushiV2ArbitragePNL {
     // variable and constant setting
     uint160 internal constant MIN_SQRT_RATIO = 4295128739;
     uint160 internal constant MAX_SQRT_RATIO =
@@ -59,11 +54,6 @@ contract AlexUniV2toSushiV2Arbitrage {
             "this contract balance: ",
             IERC20(_tokenBorrow).balanceOf(address(this))
         );
-        // uint256 repayAmount = IUniswapV2Router02(_sourceRouter).getAmountsIn(
-        //     _tokenBorrowAmount,
-        //     path
-        // )[1];
-        // console.log("amountRepay: ", repayAmount);
 
         bytes memory data = abi.encode(
             msg.sender,
@@ -155,12 +145,7 @@ contract AlexUniV2toSushiV2Arbitrage {
                 block.timestamp
             )[1];
         console.log("amountReceived: ", amountReceived);
-        // require(
-        //     amountReceived >= amountRequired,
-        //     "Not enough to repay flashswap"
-        // );
         otherToken = _amount0 == 0 ? token0 : token1;
-        // IERC20 otherToken = IERC20(_amount0 == 0 ? token0 : token1);
         console.log("otherToken: ", address(otherToken));
         console.log("amountReceived: ", amountReceived);
         console.log(
@@ -225,29 +210,3 @@ interface IWETH is IERC20 {
 
     function withdraw(uint amount) external;
 }
-
-// interface IUniswapV2Pair {
-//     function swap(
-//         uint amount0Out,
-//         uint amount1Out,
-//         address to,
-//         bytes calldata data
-//     ) external;
-// }
-
-interface IUniswapV2Factory {
-    function getPair(
-        address tokenA,
-        address tokenB
-    ) external view returns (address pair);
-}
-
-// interface IUniswapV2Router02 {
-//     function swapExactTokensForTokens(
-//         uint amountIn,
-//         uint amountOutMin,
-//         address[] calldata path,
-//         address to,
-//         uint deadline
-//     ) external returns (uint[] memory amounts);
-// }

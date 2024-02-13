@@ -7,12 +7,15 @@ import "forge-std/console.sol";
 // import "../node_modules/@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 // // import "../node_modules/@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
 // import "../node_modules/@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 // import "../node_modules/@uniswap/v2-periphery/contracts/interfaces/IWETH.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
-contract AlexUniswapV3toV2Arbitrage {
+contract AlexUniswapV3toV2ArbitragePNL {
     // variable and constant setting
     uint160 internal constant MIN_SQRT_RATIO = 4295128739;
     uint160 internal constant MAX_SQRT_RATIO =
@@ -222,15 +225,15 @@ contract AlexUniswapV3toV2Arbitrage {
     }
 }
 
-interface IUniswapV3Pool {
-    function swap(
-        address recipient,
-        bool zeroForOne,
-        int amountSpecified,
-        uint160 sqrtPriceLimitX96,
-        bytes calldata data
-    ) external returns (int amount0, int amount1);
-}
+// interface IUniswapV3Pool {
+//     function swap(
+//         address recipient,
+//         bool zeroForOne,
+//         int amountSpecified,
+//         uint160 sqrtPriceLimitX96,
+//         bytes calldata data
+//     ) external returns (int amount0, int amount1);
+// }
 
 interface IERC20 {
     function totalSupply() external view returns (uint);
@@ -271,12 +274,12 @@ interface IWETH is IERC20 {
 //     ) external;
 // }
 
-interface IUniswapV2Factory {
-    function getPair(
-        address tokenA,
-        address tokenB
-    ) external view returns (address pair);
-}
+// interface IUniswapV2Factory {
+//     function getPair(
+//         address tokenA,
+//         address tokenB
+//     ) external view returns (address pair);
+// }
 
 // interface IUniswapV2Router02 {
 //     function swapExactTokensForTokens(
